@@ -1,0 +1,41 @@
+version: "3"
+
+networks:
+  default:
+    external: true
+    name: ${TRAEFIK_NETWORK_NAME}
+
+volumes:
+  minio:
+    driver: local
+
+services:
+  minio:
+    image: quay.io/minio/minio:latest
+    restart: always
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${TRAEFIK_NETWORK_NAME}
+
+      # 80
+      - traefik.http.routers.minio-api-router.rule=Host(`${MINIO_API_HOST}`)
+      - traefik.http.routers.minio-api-router.entrypoints=web
+      - traefik.http.routers.minio-api-router.service=minio-api-service
+      - traefik.http.services.minio-api-service.loadbalancer.server.port=80
+
+      # 8080
+      - traefik.http.routers.minio-console-router.rule=Host(`${MINIO_CONSOLE_HOST}`)
+      - traefik.http.routers.minio-console-router.entrypoints=web
+      - traefik.http.routers.minio-console-router.service=minio-console-service
+      - traefik.http.services.minio-console-service.loadbalancer.server.port=8080
+
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      # - MINIO_SERVER_URL=http://${MINIO_CONSOLE_HOST}
+      - MINIO_BROWSER_REDIRECT_URL=http://${MINIO_API_HOST}
+    networks:
+      default:
+    volumes:
+      - "minio:/data"
+    command: [server, '/data', '--console-address', ':8080', '--address', ":80" ]

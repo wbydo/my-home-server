@@ -1,0 +1,15 @@
+providers:
+  docker: {}
+
+# API/Dashboard config
+api:
+  insecure: true # WebUI にアクセスできるように設定
+log:
+  level: DEBUG
+
+# コンテナを作る前に必ずポートが使用できることを確認してください
+entryPoints:
+  web:
+    address: ":80"
+  secure:
+    address: ":443"
